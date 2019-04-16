@@ -3,6 +3,7 @@ package com.example.jol.spulenbee
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.opengl.Visibility
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
@@ -12,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.GridView
+import android.widget.TextView
 import com.google.gson.Gson
 import com.loopj.android.http.JsonHttpResponseHandler
 import com.loopj.android.http.RequestParams
@@ -20,22 +22,35 @@ import kotlinx.android.synthetic.main.grid_data.view.*
 import kotlinx.android.synthetic.main.prev_data.view.*
 import org.json.JSONException
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: ItemGridAdapter
     private lateinit var prevGridAdapter: PrevDataItemAdapter
+    lateinit var errorMsg : TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        getCurrentState()
+
+        val hasConnection = InternetConnectivityManager.hasConnection(this)
+        if (hasConnection) {
+            errorMsg = findViewById<TextView>(R.id.error_msg)
+            errorMsg.visibility = View.VISIBLE
+            getCurrentState()
+        } else {
+            AlertDialogManager.showAlert(this, "NO INTERNET!", "Please check your connection and try again")
+        }
     }
 
     private fun getCurrentState() {
         val params = RequestParams()
+
         RestService.get("", params, object : JsonHttpResponseHandler() {
             override fun onSuccess(statusCode: Int, headers: Array<Header>?, response: JSONObject?) {
                 try {
+                    errorMsg.visibility = View.GONE
                     val gson = Gson()
                     val combinationData = gson.fromJson(response.toString(), CombinationData::class.java)
                     setView(combinationData.currentCombo.last())
@@ -111,7 +126,14 @@ class MainActivity : AppCompatActivity() {
             val item = this.itemList[position]
             val inflator = context?.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val itemView = inflator.inflate(R.layout.prev_data, null)
-            itemView.date.text = item[4]
+            if(item[4] != "Date") {
+                val sdf = SimpleDateFormat("dd-MM-yyyy")
+                val date = Date(item[4].toLong() * 1000)
+                itemView.date.text = sdf.format(date)
+            }
+            else {
+                itemView.date.text = item[4]
+            }
             itemView.trash.text = item[0]
             itemView.kitchen.text = item[1]
             itemView.floor.text = item[2]
