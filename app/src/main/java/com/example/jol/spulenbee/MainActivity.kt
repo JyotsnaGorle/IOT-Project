@@ -101,6 +101,7 @@ class MainActivity : AppCompatActivity() {
             val inflator = context?.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val itemView = inflator.inflate(R.layout.grid_data, null)
             itemView.itemName.text = item.name
+            // all the Icons used made by Freepik from www.flaticon.com
             itemView.image_item.setImageResource(item.icon)
             return itemView
         }
